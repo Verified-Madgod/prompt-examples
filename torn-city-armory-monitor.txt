@@ -2,7 +2,7 @@ I want to build an application for Torn City where Faction Leaders can monitor w
 
 This is the API end point where they can fetch the data
 
-https://api.torn.com/faction/?selections=armorynews&key=[API_KEY]
+https://api.torn.com/faction/[FACTION_ID]?selections=armorynews&key=[API_KEY]
 
 Where FACTION_ID is the ID of the faction, this I believe is optional and should default to the faction of the API Key's user if not supplied. We won't worry about this for now, as we won't be able to look up armory usage for other faction's anyway.
 
