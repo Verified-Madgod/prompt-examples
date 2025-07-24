@@ -1,0 +1,54 @@
+I want to build an application for Torn City where Faction Leaders can monitor who is using what in their armory
+
+This is the API end point where they can fetch the data
+
+https://api.torn.com/faction/?selections=armorynews&key=[API_KEY]
+
+Where FACTION_ID is the ID of the faction, this I believe is optional and should default to the faction of the API Key's user if not supplied. We won't worry about this for now, as we won't be able to look up armory usage for other faction's anyway.
+
+and API_KEY is the user submitted API Key.
+
+If it returns this json, it means they aren't a faction leader or co-leader, or it means they're looking up the armory feed for a faction they don't belong too. The program should return a relevant error.
+
+{ "error": { "code": 7, "error": "Incorrect ID-entity relation", }, }
+
+{ "armorynews": { "QjwDH0waeaFcylwajgp1": { "news": "\u003Ca href = "http://www.torn.com/profiles.php?XID=3737390"\u003EMoistBiscuit\u003C/a\u003E used one of the faction's First Aid Kit items", "timestamp": 1752414953 }} Here is an example of the API data returned if the user has the necessary permissions. The first bit which looks like a random string is just a unique identifier. the "news" key is what we want to look at. The first value with the URL points to the profile of the user in question. the XID in the URL is the player's ID. After this, we have the user's name, e.g "\u003EMoistBiscuit\u003C/a\u003E", in this example, their name is simpl MoistBiscuit, so we need to strip the codes at the front and end. Then it says "used one of the faction's ... items". Where the dots are, we want to take that item name, for example, "First Aid Kit"
+
+There is going to be multiple different items we want to track
+
+First Aid Kits Small First Aid Kits Morphine Empty Blood Bag Blood Bag : O+ Blood Bag : O- Blood Bag : A+ Blood Bag : A- Blood Bag : AB+ Blood Bag : AB- Blood Bag : B+ Blood Bag : B- Blood Bag : Irradiated (all of these Blood Bags above, except for empty blood bag, should be lumped under "Filled Blood Bag") Cannabis Ecstasy Ketamine LSD Opium Shrooms Speed Vicodin Ipecac Syrup Bottle of Beer Bottle of Champagne Bottle of Sake Lawyer's Business Card
+
+We also might see an event like: Madgod loaned 1x Brick to themselves from the faction armory
+
+For all loan items, we want to group these separately. Bricks, Claymore Mines, Fireworks, Flash Grenades, Grenades, HEGs, Molotov Cocktails, Ninja Stars, Pepper Spray, Smoke Grenades, Snowballs, Stick Grenades, Tear Gas, (and more), are all considered temporary items.
+
+We want to have an "Items Loaned" section somewhere which lists everything they've loaned themselves. The temporary's are basically single use items. Once they are loaned and used they're gone. But there are also primary weapons, secondary weapons, and melee weapons. We should be able to view these as "Currently On Loan" items
+
+I will leave it up to you to decide how best to display this data to the user.
+
+There are a few must's for this web application though.
+
+When the user first loads the app, it should ask them for only an API key to sign in. This API key can get stored in the browser, and is all they need to become authenticated. When the user signs in, you can make an API call to https://api.torn.com/user/?selections=profile&key=[API_KEY], this will return the below json
+{ "rank": "Champion Outcast", "level": 83, "honor": 190, "gender": "Male", "property": "Private Island", "signup": "2013-05-05 22:18:20", "awards": 449, "friends": 59, "enemies": 286, "forum_posts": 5710, "karma": 3614, "age": 4461, "role": "Civilian", "donator": 1, "player_id": 1733719, "name": "Madgod", "property_id": 4916528, "revivable": 0, "profile_image": "https://profileimages.torn.com/ce767a89-61b8-4778-b35b-586cbb57e51b-1733719.png", "life": { "current": 976, "maximum": 5433, "increment": 325, "interval": 300, "ticktime": 210, "fulltime": 4110, }, "status": { "description": "In hospital for 2 hrs 44 mins ", "details": "Hospitalized by <a href = "http://www.torn.com/profiles.php?XID=2764728">TorturersShadow</a>", "state": "Hospital", "color": "red", "until": 1753242930, }, "job": { "job": "Employee", "position": "Derrick Hand", "company_id": 111643, "company_name": "Blacktar Inc.", "company_type": 28, }, "faction": { "position": "Gunner", "faction_id": 9036, "days_in_faction": 579, "faction_name": "The Black Pearl", "faction_tag": "tBP", "faction_tag_image": "9036-87939.png", }, "married": { "spouse_id": 0, "spouse_name": "None", "duration": 0, }, "basicicons": { "icon6": "Male", "icon4": "Subscriber", "icon27": "Company - Derrick Hand of Blacktar Inc. (Oil Rig)", "icon9": "Faction - Gunner of The Black Pearl", "icon13": "Bounty - On this person's head for $150,000 : "BHG"", "icon15": "Hospital - Hospitalized by TorturersShadow - 02:44:00 ", }, "states": { "hospital_timestamp": 1753242930, "jail_timestamp": 0, }, "last_action": { "status": "Idle", "timestamp": 1753232690, "relative": "6 minutes ago", }, "competition": { "name": "Rock, Paper, Scissors", "status": "scissors", "current_hp": 95, "max_hp": 97, }, }
+
+You'll see there is a "name" key, in this case it is Madgod, we will display that in the site navigation bar, saying "Welcome, [USERNAME]"
+
+The API call to the faction should run once when the user signs in for the first time, and then every 12 hours from that point moving forward.
+
+All of this data should be stored in the database. Keep in mind, we will have multiple users across multiple different factions, so we need to keep track of all of the individual user's item uses, the faction they belong to, etc. The goal of this application is so that faction leaders can view in one glance all of their members, and TOTALS for everything they've used. In a separate view, they will be able to see the On Loan items, except the temporaries, as those are single use.
+
+For now, while I want you to build the functionality to MAKE these API calls, I want you to fill everything up with a bunch of dummy data. My faction's name is The Black Pearl, here is the JSON for all of our members fetched from : https://api.torn.com/v2/faction/members?striptags=true&key=[API_KEY]
+
+Note that this is a swagger API so it's different from the other API endpoints. You can get the names of all users from the "name" key value.
+
+{ "members": [ { "id": 23278, "name": "Surgeon", "level": 95, "days_in_faction": 3026, "last_action": { "status": "Online", "timestamp": 1753233332, "relative": "0 minutes ago" }, "status": { "description": "Returning to Torn from UAE", "details": null, "state": "Traveling", "until": null }, "revive_setting": "Unknown", "position": "Surgeon", "is_revivable": true, "is_on_wall": false, "is_in_oc": true, "has_early_discharge": false }, { "id": 32195, "name": "Hardwolf", "level": 100, "days_in_faction": 1264, "last_action": { "status": "Online", "timestamp": 1753231187, "relative": "36 minutes ago" }, "status": { "description": "Returning to Torn from United Kingdom", "details": null, "state": "Traveling", "until": null }, "revive_setting": "Unknown", "position": "Loose Cannon", "is_revivable": true, "is_on_wall": false, "is_in_oc": false, "has_early_discharge": false } ] }
+
+In this case, here are our members for some dummy data
+
+Surgeon Hardwolf Troy Danny_ Briland Rodel30 bibitzu -Banshee- D3ADP00L Feudalkiller Cable mi3_l0lled Kairity Gangsta1000 Bigdaddykane99 xxCORVUSxx Administrator Atr MossY_DoG DeadLine rokiciano grobut x_IBennnnn Enzotic mr_sasquatch Holy_Cow82 scuder92 strongp pearlular Marconus esperanto Jeng Call_me_Noob Thade Jobby Madgod Krst stubanger BlackWidow Gautzilla Elmarco Ruckus24 SneakSpace nzc CyanIcon Guts -PAIN-- BountyHunter7 advert MH480 Penetrator5000 -Pepper- Opp-Stoppa Ypso ZergKnightZ OCTOPUS92 Bushy91 Celesteela Ignignokt ClayC DyogoCosta Maltese-Gem-85 MarcusMan123 CptnCruizer InqTor Username3181 Fleoflux19 Pursu hamsterjockey MoXuP Kungomongo DaddyBurd HaRen NamowMeow Nutbutdontella KreetureSnuggleSmuggler Breja9 BoahBones Wormfuel KenSPN Pokemon_Ash Bagski p-p Tian_ TuffGuy1337
+
+A user will never be able to veiw more than one faction. An admin should not be able to view the data for other factions, only for the API key that they enter. We should be storing the data in such a way so that if a user uses the application with one API key, doesn't use it for a while, and signs in with another API key, they can still view the same data. Remember, their user name can be fetched from https://api.torn.com/user/?selections=profile&key=[API_KEY]
+
+Give it a very sleek and cool looking design. Make sure that the text contrasts well against the background, and you don't have dark text on a dark background for example, as htis is a common issue with Base44.
+
+With that being said, let's start making the program.
